@@ -1,32 +1,27 @@
 import { createBrowserRouter } from 'react-router-dom'
 
 import { RootLayout } from './components/layout/rootLayout'
+import { SimulationFormPage } from './pages/SimulationFormPage'
 
 export const router = createBrowserRouter([
   {
-    errorElement: (
-      <h1>
-        Pagina inexistente
-        <a href="/"> Redirecionar</a>
-      </h1>
-    ),
     element: <RootLayout />,
     children: [
       {
         path: '/',
-        element: (
-          <>
-            <h1 className="font-bold text-blue-500">Formulario de Simulação</h1>
-          </>
-        ),
+        element: <SimulationFormPage />,
       },
       {
         path: '/resultado',
-        element: <h1>resultado de Simulação</h1>,
+        element: <SimulationFormPage />,
       },
       {
         path: '/historico',
         element: <h1>historico de Simulação</h1>,
+      },
+      {
+        path: '*',
+        element: <h1>404 Pagina Inexistente</h1>,
       },
     ],
   },
