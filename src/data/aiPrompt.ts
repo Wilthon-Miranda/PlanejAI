@@ -60,3 +60,40 @@ Regras:
   - "needs_adjustment": saldo negativo de até 20% do valor da economia mensal necessária
   - "unfeasible": saldo negativo superior a 20% do valor da economia mensal necessária`
 }
+
+export function buildFollowUpPrompt(
+  simulation: SimulationRecord,
+  insight: Record<string, unknown>,
+  history: Array<{ role: 'user' | 'assistant'; content: string }>,
+  question: string,
+) {
+  const basePrompt = buildAIPrompt(simulation)
+
+  return `${basePrompt}
+
+Contexto adicional para a conversa:
+- Este é um acompanhamento do insight já gerado para o usuário.
+- O insight atual, em formato JSON, está abaixo e deve servir como base para respostas personalizadas:
+${JSON.stringify(insight, null, 2)}
+
+Histórico da conversa:
+${
+  history
+    .map(
+      (message) =>
+        `${message.role === 'user' ? 'Usuário' : 'Assistente'}: ${message.content}`,
+    )
+    .join('\n') || 'Nenhuma mensagem anterior.'
+}
+
+Pergunta atual do usuário:
+${question}
+
+Instruções para a resposta:
+- Responda em português do Brasil.
+- Mantenha a análise financeira personalizada e continue a conversa sem apagar o diagnóstico original.
+- Use o insight atual como contexto e adapte a resposta à pergunta do usuário.
+- Quando a dúvida impactar a meta, cite valores e proponha um ajuste prático.
+- Retorne APENAS um JSON válido no mesmo formato exato da estrutura anterior, preservando todos os campos e ajustando os textos conforme a pergunta.
+- Não use markdown dentro dos valores do JSON.`
+}
