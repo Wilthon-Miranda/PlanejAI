@@ -6,7 +6,7 @@ import { useSimulationStorage } from '@/hooks/useSimulationStorage'
 export function SimulationHistoricPage() {
   const { getAllData } = useSimulationStorage()
 
-  const data: SimulationRecord[] = getAllData()
+  const data: SimulationRecord[] = getAllData() ?? []
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10 sm:py-14">

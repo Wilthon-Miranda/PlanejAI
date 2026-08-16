@@ -5,9 +5,12 @@ import type { SimulationRecord } from '@/data/simulation'
 import { useSimulationStorage } from '@/hooks/useSimulationStorage'
 import {
   getInsight,
-  summarizeInsight,
   type InsightData,
+  type InsightMessage,
+  summarizeInsight,
 } from '@/services/aiService'
+
+const pendingFetches = new Map<string, Promise<InsightData>>()
 
 export const useInsight = (id: string) => {
   const isRequestPending = useRef(false)
@@ -35,9 +38,7 @@ export const useInsight = (id: string) => {
 
       const nextInsight = {
         ...data,
-        conversation: data.conversation ?? [
-          { role: 'assistant', content: summarizeInsight(data) },
-        ],
+        ...(data.conversation ? { conversation: data.conversation } : {}),
       }
 
       setInsight(nextInsight)
@@ -64,7 +65,14 @@ export const useInsight = (id: string) => {
 
       try {
         const prompt = buildAIPrompt(simulation)
-        const data = await getInsight(prompt)
+
+        let promise = pendingFetches.get(simulationId)
+        if (!promise) {
+          promise = getInsight(prompt)
+          pendingFetches.set(simulationId, promise)
+        }
+
+        const data = await promise
         saveInsight(simulationId, data)
       } catch (error) {
         const errorMessage =
@@ -73,6 +81,7 @@ export const useInsight = (id: string) => {
             : 'Erro ao gerar o diagnóstico. Tente novamente.'
         setError(errorMessage)
       } finally {
+        pendingFetches.delete(simulationId)
         isRequestPending.current = false
         setIsLoading(false)
       }
@@ -99,11 +108,9 @@ export const useInsight = (id: string) => {
         return
       }
 
-      const history = currentInsight.conversation ?? [
-        { role: 'assistant', content: summarizeInsight(currentInsight) },
-      ]
+      const history = (currentInsight.conversation ?? []) as InsightMessage[]
 
-      const pendingConversation = [
+      const pendingConversation: InsightMessage[] = [
         ...history,
         { role: 'user', content: trimmedQuestion },
       ]
@@ -120,13 +127,13 @@ export const useInsight = (id: string) => {
       try {
         const prompt = buildFollowUpPrompt(
           simulation,
-          currentInsight,
+          currentInsight as unknown as Record<string, unknown>,
           pendingConversation,
           trimmedQuestion,
         )
         const data = await getInsight(prompt)
 
-        const nextInsight = {
+        const nextInsight: InsightData = {
           ...data,
           conversation: [
             ...pendingConversation,
@@ -141,7 +148,6 @@ export const useInsight = (id: string) => {
             ? error.message
             : 'Erro ao enviar sua pergunta. Tente novamente.'
         setError(errorMessage)
-        // Remove a pergunta do usuário do estado se houver erro
         setInsight((prev) => {
           if (!prev) return prev
           return {
@@ -158,7 +164,6 @@ export const useInsight = (id: string) => {
   )
 
   useEffect(() => {
-    // Evita loop infinito de requisições para a API do Gemini
     if (insight || isLoading || error || isRequestPending.current) {
       return
     }

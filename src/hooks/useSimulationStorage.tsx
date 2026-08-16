@@ -23,13 +23,12 @@ export const useSimulationStorage = () => {
     return id
   }
 
-  const getAllData = (): SimulationRecord | null => {
+  const getAllData = (): SimulationRecord[] | null => {
     const storage = localStorage.getItem(LOCAL_STORAGE_KEY)
     if (!storage) {
       return null
     }
-
-    const savedData = JSON.parse(storage)
+    const savedData = JSON.parse(storage) as SimulationRecord[]
     console.log(savedData)
     return savedData
   }

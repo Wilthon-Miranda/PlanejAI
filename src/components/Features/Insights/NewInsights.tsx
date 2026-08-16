@@ -1,11 +1,7 @@
 import { ArrowUp } from 'lucide-react'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 
-import {
-  type InsightData,
-  type InsightMessage,
-  summarizeInsight,
-} from '@/services/aiService'
+import { type InsightData, type InsightMessage } from '@/services/aiService'
 
 interface ContentProps {
   insight: InsightData
@@ -31,11 +27,7 @@ const statusStyles = {
 }
 
 const getConversationMessages = (insight: InsightData): InsightMessage[] => {
-  if (insight.conversation?.length) {
-    return insight.conversation
-  }
-
-  return [{ role: 'assistant', content: summarizeInsight(insight) }]
+  return insight.conversation ?? []
 }
 
 export function Content({ insight, isSending, onSubmit }: ContentProps) {

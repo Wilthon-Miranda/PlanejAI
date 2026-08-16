@@ -31,7 +31,6 @@ const callGeminiAPI = async (
         return (await response.json()) as GeminiResponse
       }
 
-      // Erros 5xx são temporários, tentar novamente
       if (response.status >= 500) {
         if (attempt < retries - 1) {
           const waitTime = baseDelay * Math.pow(2, attempt)
@@ -43,7 +42,6 @@ const callGeminiAPI = async (
         )
       }
 
-      // Erros 4xx não são recuperáveis
       if (response.status === 401) {
         throw new Error(
           'Erro de autenticação. Verifique a chave de API do Gemini.',
@@ -57,7 +55,6 @@ const callGeminiAPI = async (
 
       throw new Error(`Erro na requisição: ${response.status}`)
     } catch (error) {
-      // Se for a última tentativa, lançar erro
       if (attempt === retries - 1) {
         if (error instanceof Error) {
           throw error
@@ -65,14 +62,12 @@ const callGeminiAPI = async (
         throw new Error('Erro ao gerar o diagnóstico. Tente novamente.')
       }
 
-      // Se for erro de rede, tentar novamente
       if (error instanceof TypeError) {
         const waitTime = baseDelay * Math.pow(2, attempt)
         await delay(waitTime)
         continue
       }
 
-      // Outros erros, lançar direto
       throw error
     }
   }
